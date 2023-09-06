@@ -20,5 +20,5 @@ $ ./setup.sh
 
 For any questions about the project:
 
-## Name: Tal Aharon
-## Email: anatolik241094@gmail.com
+### Name: Tal Aharon
+### Email: anatolik241094@gmail.com
