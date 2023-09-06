@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Open the .gitignore file in the default editor
+#
+# Usage: gitignore
+#
+# Description:
+# The `gitignore` script searches for a `.gitignore` file in the $CHOSEN_GIT or
+# the current directory and opens it in the default editor. If multiple `.gitignore`
+# files are found, the user is prompted to select one to open.
+#
+# Examples:
+#   Open the .gitignore file of the current or parent directory:
+#   $ gitignore
+#
+# Notes:
+#   - The script assumes that the default editor is set up correctly.
+# ------------------------------------------------------------------------------
+
+function open_gitignore_file()
+{
+    local ig_path="$1"
+    code "$ig_path"
+}
+
+function get_gitignore_files()
+{
+    local git_dir="${CHOSEN_GIT:-$PWD}"
+    mapfile -t ig_files < <(find "$git_dir" -name ".gitignore" -exec readlink -f {} \;)
+}
+
+function select_gitignore_file()
+{
+    local ig_num=${#ig_files[@]}
+    if [ "$ig_num" -eq 0 ]; then
+
+        echo ".gitignore not found."
+        return 1;
+
+    elif [ "$ig_num" -eq 1 ]; then
+        open_gitignore_file "${ig_files[0]}"
+    else
+        echo "Multiple .gitignore files found in the repository:"
+        select choice in "${ig_files[@]}"; do
+
+            if [ -n "$choice" ]; then
+                open_gitignore_file "$choice"
+                break
+            fi
+        done
+    fi
+}
+
+get_gitignore_files
+select_gitignore_file
+
+exit 0

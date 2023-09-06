@@ -1,0 +1,133 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Open specified files in the Visual Studio Code editor.
+#
+# Syntax: copen <file_pattern>
+#
+# Arguments:
+#   - <file_pattern>: The file pattern to match the files to be opened. Wildcards (*, ?)
+#                     can be used to match multiple files.
+#
+# Description:
+#   The `copen` script is designed to open specified files in the Visual Studio Code
+#   (VS Code) editor. It provides several convcode -renient options to open files, including
+#   specific file types like header files, source files, and test files. The script
+#   utilizes the 'code' command to open files in VS Code, which should be available in
+#   your system PATH for this function to work correctly.
+#
+# Command-line Options:
+#   None
+#
+# Usage Examples:
+#   1. Open all files in the current directory:
+#      $ copen all
+#
+#   2. Open all header files (.h and .hpp) in the current directory:
+#      $ copen h
+#
+#   3. Open all source files (.c and .cpp) in the current directory:
+#      $ copen src
+#
+#   4. Open all test files (e.g., _test.c, _test.cpp) in the current directory:
+#      $ copen test
+#
+#   5. Open specific files using wildcard patterns:
+#      $ copen myfile.c myfolder/*.h
+#
+#   6. Open files in a project directory (assumes current directory is within the project):
+#      $ copen myfile.c
+#
+# Notes:
+#   - The script uses the 'code' command to open files in VS Code, ensure it's correctly
+#     configured and available in your system PATH.
+#   - The script also supports opening files in subdirectories based on the specified
+#     patterns.
+#
+#   - If no matching files are found for a given pattern, the script will gracefully
+#     handle the situation and display an appropriate message.
+#   - Use this script responsibly and avoid opening a large number of files simultaneously,
+#     as it may lead to performance issues in VS Code.
+#
+# -----------------------------------------------------------------------------
+function open_file()
+{
+    for file in "$@"; do
+        case "$file" in
+            "all") code ./* ;;
+            "h") code ./*.h ./*.hpp ;;
+            "src") code ./*.c ./*.cpp ;;
+            "test") code ./*_test.c ./*._test.cpp ;;
+            *) search_and_open "$file" ;;
+        esac
+    done
+
+    return 0
+}
+#------------------------------------------------------------------------------
+function search_and_open()
+{
+    local file=""
+    file=$(find "$(echo "$HOME" | tr ':' ' ')" -type f -name "$1" \( $EXCLUDE_DIRS \) -prune)
+
+    if [[ -z "$file" ]]; then
+        echo "File was not found"
+        return 1
+    else
+        code "$file" || echo "Failed to open file: $file"
+        return 0
+    fi
+}
+#------------------------------------------------------------------------------
+function open_project_files()
+{
+    local name=""
+    local ext=""
+    name=$(find . -maxdepth 1 -type f \( -name "*.c" -o -name "*.cpp" \) -exec basename {} \; | sed 's/_test\.c\|_test\.cpp//')
+    ext=$(find . -maxdepth 1 -type f \( -name "*.c" -o -name "*.cpp" \) -exec bash -c 'if [[ "${0##*.}" == "cpp" ]]; then echo "pp"; fi' {} \;)
+    cd ../../ && code .
+
+    for file in "$@"; do
+        local files=()
+        case "$file" in
+            "all")
+                files+=("test/${name}/${name}_test.c${ext}")
+                files+=("include/${name}.h${ext}")
+                files+=("src/${name}.c${ext}")
+                ;;
+            "h")
+                files+=("include/${name}.h${ext}")
+                ;;
+            "src") 
+                files+=("src/${name}.c${ext}")
+                ;;
+            "test")
+                files+=("test/${name}/${name}_test.c${ext}")
+                ;;
+            *)
+                search_and_open "$file"
+                break
+                ;;
+        esac
+        code "${files[@]}"
+    done
+
+    return 0
+}
+#---------------------------------- main --------------------------------------
+if [ $# -eq 0 ]; then
+    echo "Provide at least one file to open."
+    exit 1
+fi
+
+if [[ "test" == $(basename "$(dirname "$PWD")") ]]; then
+    open_project_files "$@"
+else
+    open_file "$@"
+fi
+
+exit 0
+#------------------------------------------------------------------------------

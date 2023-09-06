@@ -1,0 +1,78 @@
+#!/bin/bash
+
+#-------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Rename a file or folder in the current directory
+#
+# Usage: rename <old_name> <new_name>
+#
+# Description: The `rename` script renames a file or folder in the current directory.
+# The function takes two arguments: the old file/folder name and the new file/folder name. It
+# checks that the old file/folder exists in the current directory, and then renames it
+# using the `mv` command with the `-T` option. If the rename is successful, it prints a 
+# success message. If there is any error, it prints an error message and returns 
+# a non-zero status code.
+#
+# Arguments:
+#   - <old_name>: The name of the file or folder to be renamed.
+#   - <new_name>: The new name for the file or folder.
+#
+# Examples:
+#   Rename a file named "file.txt" to "newfile.txt":
+#   $ rename file.txt newfile.txt
+#
+#   Rename a folder named "my_folder" to "new_folder":
+#   $ rename my_folder new_folder
+#
+# Notes:
+#   - The script assumes that the file/folder to be renamed exists in the current
+#     directory.
+#-------------------------------------------------------------------------------
+
+trap "exit 0" SIGINT
+# Function to display a message and exit with an error code
+function exit_with_error()
+{
+    echo "Error: $1"
+    exit 1
+}
+
+# Function to confirm with the user before proceeding
+function confirm()
+{
+    read -rp "$1 (y/n): "
+    case $REPLY in
+        [Yy]) return 0 ;;
+        *) exit_with_error "Operation aborted." ;;
+    esac
+}
+
+trap "exit 0" SIGINT
+if [[ $# -lt 2 ]]; then
+    echo "Usage: rename <old_name> <new_name>";
+    exit 1
+fi
+
+old_name="$1"
+new_name="$2"
+
+if [[ ! -e $old_name ]]; then
+    exit_with_error "'$old_name' does not exist."
+fi
+
+# Check if the new name already exists
+if [[ -e $new_name ]]; then
+    confirm "'$new_name' already exists. Do you want to overwrite it?"
+fi
+
+mv -T "$old_name" "$new_name"
+
+if [[ $? -eq 0 ]]; then
+    echo "Renamed from '$old_name' to '$new_name'"
+else
+    exit_with_error "Failed to rename '$old_name' to '$new_name'"
+fi
+
+exit 0

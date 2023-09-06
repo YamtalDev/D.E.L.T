@@ -1,0 +1,102 @@
+#!/bin/bash
+
+#------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose:
+#   Make files executable by changing their file mode bits. If no argument is provided,
+#   the function will make all files in the current directory executable.
+#
+# Usage: 
+#   modx [file]
+#   modx -r [file]
+#
+# Arguments:
+#   - file: (optional) The name of the file to make executable or remove the executable permission from.
+#   - -r: (optional) Remove the executable permission from the file.
+#
+# Returns:
+#   None.
+#
+# Examples:
+#   1. Make all files in the current directory executable:
+#       $ modx
+#
+#   2. Make a file named "script.sh" executable:
+#       $ modx script.sh
+#
+#   3. Remove the executable permission from a file named "script.sh":
+#       $ modx -r script.sh
+#
+# Notes:
+#   - If the file is already executable (or not executable), the function will not modify its permissions.
+#   - If the file is not found, the function will print an error message.
+#   - If no argument is provided and the function is executed in a large directory with 
+#     many files, it may take some time to complete.
+#   - The function will prompt the user for confirmation before making all files executable.
+#   - This function is designed for use in the Bash shell.
+#------------------------------------------------------------------------------
+
+trap "exit 0" SIGINT
+if [[ $1 == "-r" ]]; then
+  if [[ $# -eq 1 ]]; then
+    read -p "Are you sure you want to remove executable permission? (y/n) " confirm
+    if [[ $confirm == [yY] ]]; then
+      shopt -s dotglob
+      for file in *; do
+        if [[ -f "$file" ]]; then
+          if [[ -x "$file" ]]; then
+            chmod -x "$file"
+            echo "Removed executable permission from $file."
+          else
+            echo "$file is not executable."
+          fi
+        fi
+      done
+      shopt -u dotglob
+    else
+      echo "Aborted."
+    fi
+  else
+    if [[ -f "$2" ]]; then
+      if [[ -x "$2" ]]; then
+        chmod -x "$2"
+        echo "Removed executable permission from $2."
+      else
+        echo "$2 is not executable."
+      fi
+    else
+      echo "File not found."
+    fi
+  fi
+else
+  if [[ $# -eq 0 ]]; then
+    read -p "Are you sure you want to make all files executable? (y/n) " confirm
+    if [[ $confirm == [yY] ]]; then
+      shopt -s dotglob
+      for file in *; do
+        if [[ -f "$file" ]]; then
+          if [[ -x "$file" ]]; then
+            echo "$file is already executable."
+          else
+            chmod +x "$file"
+          fi
+        fi
+      done
+      shopt -u dotglob
+    else
+      echo "Aborted."
+    fi
+  else
+    if [[ -f "$1" ]]; then
+      if [[ -x "$1" ]]; then
+        echo "$1 is already executable."
+      else
+        chmod +x "$1"
+      fi
+    else
+      echo "File not found."
+    fi
+  fi
+fi

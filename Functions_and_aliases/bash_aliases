@@ -1,0 +1,146 @@
+#!/bin/bash
+###############################################################################
+# List files aliases
+###############################################################################
+
+# List all files and directories in a long format with detailed information, including hidden files.
+alias ll='ls -alF'
+# List all files and directories except for the current and parent directories.
+alias la='ls -A'
+# List files and directories in a compact format with additional file type indicators.
+alias l='ls -CF'
+# List all files and directories in a long format with color-coded output.
+alias ls='ls -alC --color=auto'
+# List all files and directories in a long format, including hidden files.
+alias ls.='ls -la'
+
+###############################################################################
+# Change direcoty aliases
+###############################################################################
+
+# Change directory to the user's home directory.
+alias home='cd ~'
+# Move up one level in the directory hierarchy.
+alias ..='cd ..'
+# Move to the code_review directory
+alias review='cd $CHOSEN_GIT/code_review'
+
+###############################################################################
+# File System Aliases
+###############################################################################
+
+# Display a tree-like representation of the file system with color-coded output, showing hidden files and directories first.
+alias tree='tree -C -a -h -F --dirsfirst'
+# Display mounted file systems in a tabulated format.
+alias mount='mount |column -t'
+# Copy files with interactive prompting to avoid overwriting.
+alias cp='cp -i'
+# Move or rename files with interactive prompting to avoid overwriting.
+alias mv='mv -i'
+# Display the list of listening ports and associated processes.
+alias ports='netstat -tulanp -p'
+# Create hard links with interactive prompting to avoid overwriting.
+alias ln='ln -i'
+# Alias to open the makefile in the currect directory
+alias makefile="make_"
+# Alias to open the "bash_functions" file in a code editor
+alias functions='code $BASH_UTILS/bash_functions'
+# Alias to open the "bash_aliases" file in a code editor
+alias aliases='code $BASH_UTILS/bash_aliases'
+# Open bashrc file
+alias bashrc='code ~/.bashrc'
+
+###############################################################################
+# Machine Information Aliases
+###############################################################################
+
+# Display CPU information using the lscpu command with parsing options.
+alias cpu='lscpu -p'
+# List running processes sorted by CPU usage in descending order.
+alias pscpu='ps auxf | sort -nr -k 3'
+# List running processes sorted by memory usage in descending order.
+alias psmem='ps auxf | sort -nr -k 4'
+# Display memory information, including RAM usage and total memory.
+alias meminfo='free -m -l -t'
+# Display disk space usage using the df command with human-readable format.
+alias memory='df -h'
+
+###############################################################################
+# Uncategorized Aliases
+###############################################################################
+
+# Resource the bashrc
+alias resource='source ~/.bashrc'
+# Revert terminal settings to allow echo and canonical mode.
+alias unshadow='stty icanon echo'
+# Disable terminal echo and canonical mode, useful for password input.
+alias shadow='stty -icanon -echo'
+# Clears the terminal and sends the key combination "Shift+Alt" using xdotool.
+alias בךקשר='clear && xdotool key shift+alt'
+
+###############################################################################
+# Open apps Aliases
+###############################################################################
+
+# Opens the GNOME Control Center in the background.
+alias settings='gnome-control-center &'
+# Launches the GNOME Todo application.
+alias TODO='gnome-todo &'
+# Opens a new GNOME Terminal tab with the current working directory.
+alias terminal='gnome-terminal --tab --working-directory="$PWD"'
+# Opens the GNOME Calculator application.
+alias calc='gnome-calculator &'
+
+###############################################################################
+# Browser links aliases
+###############################################################################
+
+# Open the gnu guid
+alias gnu='xdg-open https://www.gnu.org/software/gnu-c-manual/gnu-c-manual.html'
+# Open gmail
+alias gmail='xdg-open https://mail.google.com/mail/u/0/#inbox'
+# Open google drive
+alias drive='xdg-open https://drive.google.com/drive/my-drive'
+# Open whatsapp
+alias whatsapp='xdg-open https://web.whatsapp.com/ &'
+# Open youtube
+alias youtube='xdg-open https://www.youtube.com/'
+
+###############################################################################
+# GIT Aliases
+###############################################################################
+
+# open online repository 
+alias repo='xdg-open https://git.infinitylabs.co.il'
+# configure git for the shell session
+alias gitconfig='git config --global user.name "tal.aharon" &&  git config --global user.email "anatolik241094@gmail.com" && git config --global --unset-all credential.helper && git config --global credential.helper cache --timeout=36000'
+# Undo the last commit
+alias undo_commit=' git reset --soft HEAD~1'
+
+###############################################################################
+# Sudo privilage aliases
+###############################################################################
+
+# Update and upgrade
+alias update='sudo apt-get update -y && sudo apt-get upgrade -y'
+# Reboot the system
+alias reboot='sudo reboot'
+# Act as a root privilage
+alias root='sudo -i'
+
+###############################################################################
+# Compilation aliases
+###############################################################################
+
+# Compile C programs
+alias compile='clear && time gcc -ansi -pedantic-errors -Wall -Wextra -Wunused -Wunused-function -Werror'
+# Compile C++ programs
+alias gpp='clear && time g++ -std=c++98 -Wall -Werror -Wextra -Wunused -Wunused-function -g'
+
+# Other compilation aliases
+alias gc='gcc -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
+alias gd9='gcc -g -std=c99 -pedantic-errors -Wall -Wextra'
+alias gc9='gcc -g -std=c99 -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
+alias object='clear && time gcc -ansi -pedantic-errors -Wall -Wextra -c'
+
+###############################################################################

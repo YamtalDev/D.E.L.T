@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Google Search Script
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Perform a Google search using the default web browser.
+#
+# Syntax: google <search_terms>
+#
+# Arguments:
+#   - <search_terms>: The search terms to be used for the Google search. 
+#                     Multiple search terms can be provided, separated by spaces.
+#
+# Description:
+#   The `google` script allows you to perform a Google search using the 
+#   default web browser on your system. It takes any number of search terms as 
+#   command-line arguments and concatenates them with "%20" (which represents a 
+#   space in URL encoding) to form a search query. The script then opens the 
+#   default web browser to perform the search on Google.
+#
+# Command-line Options:
+#   None
+#
+# Usage Examples:
+#   1. Perform a basic Google search for a single term:
+#      $ google "apple"
+#
+#   2. Perform a Google search with multiple terms:
+#      $ google "best movies of 2023"
+#
+#   3. Search for specific information with multiple terms:
+#      $ google "how to bake a cake"
+#
+#   4. Include special characters in the search:
+#      $ google "python programming language tutorial"
+#
+# Notes:
+#   - The script assumes that the user will provide search terms as command-line 
+#     arguments.
+#   - If a search term contains spaces, the script will handle it correctly by 
+#     URL-encoding the spaces with "%20".
+#   - The script relies on `xdg-open` (Linux), `open` (macOS), or `start` (Windows) 
+#     to open the default web browser. Ensure that your system has one of these 
+#     commands available in the system PATH for this functionality to work.
+#   - If the script cannot open a web browser, it will display an error message 
+#     prompting the user to manually perform the search.
+#   - Use this script responsibly and respect Google's usage policies.
+#
+# -----------------------------------------------------------------------------
+
+
+# Input validation
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <search terms>"
+    exit 1
+fi
+
+# Initialize the search query
+search=""
+
+# Loop through each argument and handle spaces
+for term in "$@"; do
+    # Replace spaces with URL-encoded space (%20)
+    encoded_term="${term// /%20}"
+    # Append the encoded term to the search query
+    search="$search%20$encoded_term"
+done
+
+# Try opening the search query in common browsers
+if command -v xdg-open > /dev/null; then
+    # XDG systems (Linux)
+    xdg-open "http://www.google.com/search?q=$search" &
+elif command -v open > /dev/null; then
+    # macOS
+    open "http://www.google.com/search?q=$search" &
+elif command -v start > /dev/null; then
+    # Windows (using 'start' command)
+    start "http://www.google.com/search?q=$search"
+else
+    echo "Error: Could not open a web browser. Please manually perform the search."
+fi

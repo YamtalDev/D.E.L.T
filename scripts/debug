@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Start the GNU Debugger (GDB) in text user interface (TUI) mode for an 
+# executable with debug information.
+#
+# Syntax: debug <executable>
+#
+# Arguments:
+#   - <executable>: The name of the executable file to be debugged.
+#
+# Description:
+#   The `debug()` script starts the GNU Debugger (GDB) in text user interface 
+#   (TUI) mode for an executable that has debugging information. If the executable 
+#   file does not have debugging information, an error message will be displayed, 
+#   and the function will return a non-zero exit status. If no argument is provided, 
+#   an error message will be displayed, and the function will return a non-zero exit status.
+#
+# Examples:
+#   Start debugging an executable in the current directory:
+#   $ debug myprogram
+#
+# Notes:
+#   - The GNU Debugger (GDB) must be installed on your system for this function to work.
+#   - This function assumes that the program being debugged is compiled with the -g flag
+#     to generate debug information that GDB can use.
+#   - This function may not work correctly with all types of programs or in all scenarios,
+#     so use it with caution and always verify the results.
+#
+# ----------------------------------------------------------------------------------
+
+# Exit immediately if any command fails
+set -e
+
+executable="$1"
+if [ -z "$executable" ]; then
+    echo "Usage: debug <executable>"
+    exit 1
+fi
+
+if ! file "$executable" | grep -q 'with debug_info'; then
+    echo "Error: $executable does not have debugging information"
+    exit 1
+fi
+
+clear && gdb -tui "$executable"
+exit 0

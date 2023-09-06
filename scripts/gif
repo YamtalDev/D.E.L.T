@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a GIF from a video using FFmpeg and open it.
+#
+# Syntax: gif <name> <file> <duration(sec)> <start_time(hh:mm:ss)> <speed(1,2,3 ..)>
+#
+# Arguments:
+#   - <name>:        The desired name for the output GIF file (without extension).
+#   - <file>:        The input video file path.
+#   - <duration>:    Duration in seconds for the extracted video portion.
+#   - <start_time>:  Start time in hh:mm:ss format for the extracted portion.
+#   - <speed>:       Speed factor for the GIF creation.
+#
+# Description:
+#   The `gif` script is used to create a GIF from a specified portion of an input video.
+#   It utilizes FFmpeg to extract the desired segment, adjust its speed, and convert it
+#   into a GIF. The script then opens the generated GIF file using the default viewer.
+#
+# Command-line Options:
+#   None
+#
+# Usage Examples:
+#   1. Create a GIF named "output.gif" from "input.mp4" starting at 00:00:05, with 2x speed:
+#      $ gif output input.mp4 10 00:00:05 2
+#
+# Notes:
+#   - FFmpeg must be installed and accessible in your system PATH.
+#   - The script uses a complex filter to optimize color quality and file size of the GIF.
+#   - The script opens the generated GIF using the default viewer (xdg-open).
+#
+#   - Ensure you have necessary permissions to execute the script and read/write files.
+#   - Use responsibly and avoid processing large videos, as it may impact performance.
+#
+# -----------------------------------------------------------------------------
+
+name="$1"
+video="$2"
+duration="$3"
+start_time="$4"
+speed="$5"
+
+if [[ -z "$name" || -z "$video" || -z "$duration" || -z "$start_time" || -z "$speed" ]]; then
+    echo -e "Missing required arguments."
+    echo -e "Usage: gif <name> <file> <duration(sec)> <start_time(hh:mm:ss)> <speed(1,2,3 ..)>"
+    exit 1
+fi
+
+if [ ! -f "$video" ]; then
+    echo -e "Input video file not found."
+    exit 1
+fi
+
+# Extract portion of video and create GIF
+ffmpeg -ss "$start_time" -t "$duration" -i "$video" -filter_complex \
+"[0:v]setpts=PTS/$speed,scale=320:-1,split [a][b];[a]palettegen[p];[b][p]paletteuse" "$name.gif"
+
+# Open the generated GIF
+xdg-open "$name.gif" &
+
+exit 0

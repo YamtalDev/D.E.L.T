@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Push changes to a remote Git repository
+#
+# Usage: push [branch]
+#
+# Description: The `push` script pushes the changes in the current branch to the
+# remote Git repository. If a branch name is provided as an argument, the function
+# pushes the changes in that branch instead of the current branch. If no branch name
+# is provided, the function pushes the changes to the current branch. The function
+# assumes that the remote repository is named "origin" by default, but users can modify
+# this behavior by changing the remote repository name in their Git configuration.
+#
+# Arguments:
+#   - [branch]: The name of the branch to push changes to (optional).
+#
+# Examples:
+#   Push changes to the current branch:
+#   $ push
+#
+#   Push changes to a branch named "my-branch":
+#   $ push my-branch
+#
+# Notes:
+#   - The script assumes that the remote Git repository is named "origin" by default.
+#   - Users can modify the remote repository name in their Git configuration.
+# ------------------------------------------------------------------------------
+
+trap "exit 0" SIGINT
+function main()
+{
+    local branch="$1"
+    trap "exit 0" SIGINT
+    clear
+
+    cd "$CHOSEN_GIT" && git status
+
+    if [[ -z "$branch" ]]; then
+        branch=$(git rev-parse --abbrev-ref HEAD)
+    fi
+
+    git push -u origin "$branch"
+
+    if [ $? -eq 0 ]; then
+        echo "Pushed to $branch"
+    else
+        echo "ERROR: Git push failed."
+    fi
+}
+
+main "$@"
+exit 0

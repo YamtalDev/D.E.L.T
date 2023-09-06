@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a new C++ source file with a given name in the current directory.
+#
+# Usage: cppfile <name of the file>
+#
+# Arguments:
+#   - <name of the file>: The name of the new C++ source file to create.
+#
+# Description:
+#   The `cppfile` function takes the name of a new C++ source file as an argument and 
+#   creates a new file in the current directory with that name. The new file is 
+#   initialized with the contents of an example C++ source file from the user's 
+#   home directory. The function then opens the new file for editing.
+#
+# Examples:
+#   Create a new C++ source file called `my_file.cpp` and open it for editing:
+#   $ cppfile my_file
+#
+# Notes:
+#   - The example C++ source file is assumed to be located in the user's home directory.
+#
+# -----------------------------------------------------------------------------
+
+set -e; # Exit immediately if any command fails
+
+if [ -z "$1" ]; then
+    echo "Please provide a name for a new C++ file: cppfile <name>"
+    exit 1
+fi
+
+template_file_name="test_file.cpp"
+path_to_cpp_template=$(find "$(echo "$CHOSEN_GIT" | tr ':' ' ')" -type f -name "$template_file_name")
+
+if [ ! -f "$path_to_cpp_template" ]; then
+    echo "Template C++ source file '$template_file_name' not found."
+    exit 1
+fi
+
+new_file_name="$1.cpp"
+
+if [ -f "$new_file_name" ]; then
+    echo "File '$new_file_name' already exists. Choose a different name."
+    exit 1
+fi
+
+cat "$path_to_cpp_template" > "$new_file_name"
+code "$new_file_name"
+exit 0

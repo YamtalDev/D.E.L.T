@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#-------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Extracts files from various archive formats
+#
+# Usage: extract <filename_or_directory>
+#
+# Description: The `extract` script extracts files from various archive formats. It supports
+# the following archive formats: tar.bz2, tar.gz, bz2, rar, gz, tar, tbz2, tgz, zip, Z.
+# The function identifies the file format based on the file extension and extracts the
+# contents of the archive using the appropriate tool.
+#
+# Arguments:
+#   - <filename_or_directory>: The name of the archive file or directory to extract.
+#
+# Examples:
+#   Extract a file named "my_archive.tar.gz":
+#   $ extract my_archive.tar.gz
+#
+#   Extract a folder named "my_folder":
+#   $ extract my_folder
+#
+# Notes:
+#   - The script works with both files and directories.
+#   - The script identifies the file format based on the file extension, so the file extension
+#     must be present for the function to work correctly.
+#-------------------------------------------------------------------------------
+
+# Validate input argument
+if [ -z "$1" ]; then
+    echo "Usage: extract <filename_or_directory>"
+    exit 1
+fi
+
+if [ ! -e "$1" ]; then
+    echo "'$1' does not exist"
+    exit 1
+fi
+
+case "$1" in
+
+    *.tar.bz2)   tar xvjf "$1"                    ;;
+    *.tar.gz)    tar xvzf "$1"                    ;;
+    *.bz2)       bunzip2 "$1"                     ;;
+    *.rar)       unrar e "$1"                     ;;
+    *.gz)        gunzip "$1"                      ;;
+    *.tar)       tar xvf "$1"                     ;;
+    *.tbz2)      tar xvjf "$1"                    ;;
+    *.tgz)       tar xvzf "$1"                    ;;
+    *.zip)       unzip "$1"                       ;;
+    *.Z)         uncompress "$1"                  ;;
+    *)           echo "'$1' cannot be extracted." ;;
+
+esac
+
+exit 0;

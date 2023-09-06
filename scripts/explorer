@@ -1,0 +1,65 @@
+#!/bin/bash
+
+#------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Open a directory in a graphical file manager.
+#
+# Usage: explorer <directory>
+#
+# Description:
+#   The `explorer` script is designed to open a specified directory in a graphical
+#   file manager. It utilizes the 'find' command to search for directories with the
+#   given name in the directories specified in the `PATH` environment variable.
+#   If a single directory is found, it is opened in the default graphical file manager.
+#   In case multiple directories with the same name are found, the user is prompted to
+#   select one to open.
+#
+# Arguments:
+#   - <directory>: The name of the directory to open.
+#
+# Examples:
+#   1. Open the directory named "Documents" in the default graphical file manager:
+#      $ explorer Documents
+#
+# Notes:
+#   - If no directory with the given name is found, the function opens the current
+#     working directory (./).
+#   - The `explorer` function uses the 'xdg-open' command to open directories in the
+#     default graphical file manager, which may vary depending on the user's operating
+#     system and configuration.
+#   - The script traps the SIGINT signal (Ctrl+C) to exit gracefully without displaying
+#     error messages.
+#
+#------------------------------------------------------------------------------
+
+dir_name="$1"
+trap "exit 0" SIGINT
+
+if [[ -z "$dir_name" ]]; then
+    xdg-open ./ > /dev/null 2>&1
+    exit 0;
+elif [[ "home" == "$dir_name" ]]; then
+    xdg-open ~ > /dev/null 2>&1
+    exit 0;
+elif [[ "git" == "$dir_name" ]]; then 
+    xdg-open "$CHOSEN_GIT" > /dev/null 2>&1
+    exit 0;
+fi
+
+dir_paths=$(find "$HOME" -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune)
+num_dirs=${#dir_paths[@]}
+
+if [[ "$num_dirs" -eq 0 ]]; then
+    echo "Directory not found"
+elif [[ "$num_dirs" -eq 1 ]]; then
+    xdg-open "${dir_paths[0]}"
+else
+    echo "Multiple directories found with name '$dir_name':"
+    for ((i = 0; i < "$num_dirs"; i++)); do
+        echo "[$i] ${dir_paths[$i]}"
+    done
+    read -p "Enter the number of the directory to open: " choice
+    xdg-open "${dir_paths[$choice]}"
+fi

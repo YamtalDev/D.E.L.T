@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Open relevant files for a makefile project in the Visual Studio Code editor.
+#
+# Syntax: make_ <-o> <-c | -cpp>
+#
+# Arguments:
+#   -o: Flag to indicate opening relevant files for a makefile project.
+#   -c: Flag to open the "complex_makefile_example" file.
+#   -cpp: Flag to open the "cpp_complex_makefile_example" file.
+#
+# Description:
+#   The `make_` script is designed to facilitate the process of opening files related
+#   to a makefile project in the Visual Studio Code (VS Code) editor. It provides options
+#   to open specific files using the '-c' and '-cpp' flags, or to open the project's
+#   Makefile if no flags are provided. The script utilizes the 'code' command to open
+#   files in VS Code, which should be available in your system PATH for this function to
+#   work correctly.
+#
+# Command-line Options:
+#   -o: This flag must be provided to indicate that the script should open relevant
+#       files for a makefile project.
+#   -c: Use this flag along with the '-o' flag to open the "complex_makefile_example" file.
+#   -cpp: Use this flag along with the '-o' flag to open the "cpp_complex_makefile_example" file.
+#
+# Examples:
+#   1. Open the "complex_makefile_example" file for a makefile project:
+#      $ make_ -o -c
+#
+#   2. Open the "cpp_complex_makefile_example" file for a makefile project:
+#      $ make_ -o -cpp
+#
+#   3. Open the project's Makefile:
+#      $ make_ -o
+#
+#   4. If no flag is provided, the script will check for the presence of "Makefile" and "makefile"
+#      files in the current directory and open the first one found in VS Code:
+#      $ make_
+#
+# Notes:
+#   - The script assumes that the 'code' command is correctly configured and available in your system PATH.
+#   - This script is intended for use with makefile projects to simplify the process of opening relevant files.
+#   - If no relevant files are found for a given flag, the script will not open any files and exit gracefully.
+#   - When using the '-o' flag, one of '-c' or '-cpp' flags must be provided to specify which file to open.
+#   - Use this script responsibly, as frequent opening of multiple files may lead to resource consumption.
+#
+# -----------------------------------------------------------------------------
+
+function make_file()
+{
+    if [[ "-c" == "$2" ]]; then
+        code "$(find "$(echo "$CHOSEN_GIT" | tr ':' ' ')" -type f -name "complex_makefile_example")"
+    elif [[ "-cpp" == "$2" ]]; then
+        code "$(find "$(echo "$CHOSEN_GIT" | tr ':' ' ')" -type f -name "cpp_complex_makefile_example")"
+    fi
+}
+
+function open_makefile()
+{
+    if [[ -f "Makefile" ]]; then
+        code "Makefile"
+    elif [[ -f "makefile" ]]; then
+        code "makefile"
+    else
+        echo "Makefile not found"
+    fi
+}
+
+if [[ "-o" == "$1" ]]; then
+    make_file "$1"
+fi
+
+if [[ -z "$1" ]]; then
+    open_makefile
+fi
+
+exit 0

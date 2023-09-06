@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Returns the size of a file or directory in human-readable format.
+#
+# Usage: sizeof <file_or_directory>
+#
+# Description: The `sizeof` script returns the size of a file or directory in
+# human-readable format, such as "42K" or "1G". If the input is a directory, the
+# function returns the size of the entire directory tree. If the input is a file,
+# the function returns the size of the file only.
+#
+# Arguments:
+#   - <file_or_directory>: The file or directory to get the size of.
+#
+# Examples:
+#   Get the size of a file:
+#   $ sizeof myfile.txt
+#   10K
+#
+#   Get the size of a directory:
+#   $ sizeof mydir
+#   1.5M
+#
+# Notes:
+#   - If the file or directory does not exist, the function prints an error message
+#   and returns an error code.
+# ------------------------------------------------------------------------------
+
+if [[ ! -e "$1" ]]; then
+    echo "File or directory not found: $1"
+    return 1
+fi
+
+if [[ -d "$1" ]]; then
+    size=$(du -sh "$1" | awk '{print $1}')
+else
+    size=$(du -h "$1" | awk '{print $1}')
+fi
+
+echo "$size"

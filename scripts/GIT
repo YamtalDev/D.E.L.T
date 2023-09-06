@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Perform Git operations to commit and push changes.
+#
+# Syntax: GIT <commit_message>
+#
+# Arguments:
+#   - <commit_message>: Optional. The message for the Git commit. If not provided,
+#                       the default message "Committing last changes in repo 💭️" is used.
+#
+# Description:
+#   The `GIT` script automates the process of committing and pushing
+#   changes to a Git repository. By executing this script, the user can quickly stage
+#   all changes, commit them with a specified or default commit message, push the
+#   changes to the remote repository, and check the status afterward.
+#
+#   If a commit message is provided as an argument, it will be used as the commit message.
+#   If no commit message is provided, the default message "Committing last changes in repo 💭️"
+#   will be used.
+#
+#   The script starts by checking the Git status and displaying it in a clear terminal.
+#   Then it stages all changes using `git add .` and displays the status again.
+#   After that, it performs the commit operation with the provided or default commit message
+#   using `git commit -m "$commit_message"`. It then proceeds to push the changes to the
+#   remote repository using `git push` and displays the status once more.
+#
+#   If the Git operations (commit, push) are successful, an appropriate success message
+#   "💭️🚀💭️" is displayed. If any of the Git commands fail, an error message is shown,
+#   and the script exits with a status code of 1.
+#
+# Command-line Options:
+#   None
+#
+# Examples:
+#    $ GIT "Updated README file" or simply GIT
+#
+# Notes:
+#   - It is recommended to review and verify the changes before executing the script.
+#   - Use this script responsibly and be cautious when committing and pushing changes.
+#   - The script assumes that the necessary Git configurations (such as remote repository
+#     and authentication) are properly set up.
+#
+# ----------------------------------------------------------------------------------
+
+trap "exit 0" SIGINT
+function exit_with_error()
+{
+    echo "ERROR: $1"
+    exit 1
+}
+
+# Function to add all changes and display status
+function git_add_changes()
+{
+    git add .
+    git status
+}
+
+# Function to perform git commit
+function git_commit_changes()
+{
+    local commit_message="$1"
+    git commit -m "$commit_message"
+}
+
+# Function to perform git push
+function git_push_changes()
+{
+    git push
+    git status
+}
+
+# Main script
+commit_message="${1:-"Commiting last changes in repo 💭️🚀💭️"}"
+
+clear;
+cd "$CHOSEN_GIT" && git status
+git_add_changes
+git_commit_changes "$commit_message" || exit_with_error "Git commit failed."
+git_push_changes || exit_with_error "Git push failed."
+
+echo -e "\n💭️🚀💭️"
+exit 0;

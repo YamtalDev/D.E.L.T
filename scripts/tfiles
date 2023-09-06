@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ext=""
+if [[ '++' == "$1" ]]; then
+    ext="cpp_"
+fi
+
+path_to_project=$(find "$CHOSEN_GIT" -type d -name "${ext}project_files" | head -n 1)
+cd "$path_to_project" || exit 1
+
+if [[ -z "$ext" ]]; then
+    code ./*c ./*h
+else
+    code ./*cpp ./*hpp
+fi

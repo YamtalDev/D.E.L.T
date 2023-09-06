@@ -1,0 +1,285 @@
+#!/bin/bash
+# bash functions to be source in the bashrc
+
+function google()
+{
+	search=""
+	for term in "$@"; do
+		search="$search%20$term"
+	done
+	xdg-open "http://www.google.com/search?q=$search"
+}
+
+
+# GITLOG displays log history and head pointer. 
+function GITLOG()
+{
+	git log --graph --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) 
+	%C(white)%an%C(reset)%C(bold yellow)%d%C(reset) %C(dim white)- %s%C(reset)' --all ;
+}
+
+
+#-------------------------------------------------------------------------------
+#
+#                                   gif() function:
+#
+#    Usage: gif <name> <file> <duration(sec)> start_time(hh:mm:ss) speed(1,2,3 ..)
+#
+# The gif function creates a GIF file from a portion of a video file. The function
+# requires five arguments:
+# <name>: the desired name for the output GIF file,
+# <file>: the input video file,
+# <duration>: the duration of the portion of the video to use in the GIF,
+# <start_time>: the start time of the portion of the video to use in the GIF, and
+# <speed>: the speed of the GIF, which determines how many frames are shown per second.
+# The function uses FFmpeg to extract the portion of the video, and then creates the GIF using
+# the extracted frames. The output GIF is opened in the default image viewer.
+#
+#-------------------------------------------------------------------------------
+
+gif()
+{
+	name=$1
+	video=$2
+	duration=$3
+	start_time=$4
+	speed=$5
+
+	if [ -z "$name" ] || [ -z "$video" ] || [ -z "$duration" ] || [ -z "$start_time" ] || [ -z "$speed" ]; then
+		echo -e "Missing required arguments."
+		echo -e "Usage: gif <name> <file> <duration(sec)> start_time(hh:mm:ss) speed(1,2,3 ..)"
+		return
+	fi
+
+	if [ ! -f "$video" ]; then
+		echo -e "Input video file not found."
+		return
+	fi
+
+	# Extract portion of video
+	ffmpeg -ss "$start_time" -t "$duration" -i "$video" -filter:v "setpts=($speed/($speed*$speed))*PTS,scale=320:-1" -pix_fmt rgb8 -r "$duration" "$name".gif
+
+	open "$name.gif"
+}
+
+
+#-------------------------------------------------------------------------------
+#
+#                           weather() function:
+#
+#                    Usage: weather <town or city>
+#
+# The weather function displays the weather of the provided town or city. It
+# clears the terminal and uses the curl command to fetch the weather information
+# from the wttr.in website. The town or city should be provided as an argument.
+#
+#-------------------------------------------------------------------------------
+
+weather() 
+{
+	if [ -z "$1" ]; then
+		echo "Usage: weather <town or city>"
+		return 1
+	fi
+	clear
+	curl wttr.in/"$1" ;
+}
+
+#-------------------------------------------------------------------------------
+#
+#                        creatfiles() function:
+#
+#                     Usage: creatfiles <filename>
+#
+# The creatfiles function creates a file with the provided filename in the
+# current directory and all subdirectories recursively. It uses the find command
+# to locate all directories in the current directory and executes the touch
+# command to create the file in each directory.
+#
+#-------------------------------------------------------------------------------
+
+creatfiles()
+{
+	find . -type d -exec touch {}/"$1" \; ;
+}
+
+#-------------------------------------------------------------------------------
+#
+#                      removefiles() function:
+#
+#                  Usage: removefiles <filename>
+#
+# The removefiles function removes a file with the provided filename in the
+# current directory and all subdirectories recursively. It uses the find command
+# to locate all directories in the current directory and executes the rm command
+# to remove the file in each directory.
+#
+#-------------------------------------------------------------------------------
+
+removefiles()
+{
+	find . -type d -exec rm {}/"$1" \; ;
+}
+
+
+
+#-------------------------------------------------------------------------------
+#
+#                         google() function:
+#
+#                   Usage: google <search terms>
+#
+# The google function opens the default web browser and searches the provided
+# terms on Google. It uses the xdg-open command to open the search in the
+# default browser. The terms should be provided as separate arguments.
+#
+#-------------------------------------------------------------------------------
+
+
+
+
+# ------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/histo
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Search bash history for a specific keyword.
+#
+# Usage: histo <keyword>
+#
+# Description: The `histo` function clears the screen and searches the bash history
+# for the specified keyword, displaying all commands that match.
+#
+# Arguments:
+#   - <keyword>: The keyword to search for in the bash history.
+#
+# Examples:
+#   Search bash history for the keyword "cd":
+#   $ histo cd
+#
+# Notes:
+#   - The function is case sensitive.
+# ------------------------------------------------------------------------------
+
+histo()
+{
+	if [ -z "$1" ]; then
+		echo "Usage: histo <key word>"
+		return 1
+	fi
+	clear
+	history | grep "$1" ;
+}
+
+
+
+# ------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/folder
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a new directory and change to it.
+#
+# Usage: folder <folder name>
+#
+# Description: The `folder` function creates a new directory with the specified name
+# and navigates to it.
+#
+# Arguments:
+#   - <folder name>: The name of the directory to create.
+#
+# Examples:
+#   Create a new directory called "my_folder" and navigate to it:
+#   $ folder my_folder
+#
+# Notes:
+#   - If a directory with the specified name already exists, the function will
+#     still navigate to it.
+# ------------------------------------------------------------------------------
+
+folder()
+{
+	if [ -z "$1" ]; then
+		echo "Usage: folder <folder name>"
+		return 1
+	fi
+
+	mkdir -p "$1" && cd "$1" || echo "Error cd to $1"; 
+}
+
+
+goto()
+{
+	local dir_name="$1"
+	local command="$2"
+	local goback="$3"
+
+	if [[ "$dir_name" == "sleep" ]]; then
+		goto_sleep
+		return
+	fi
+
+	if [ -n "$dir_name" ]; then
+		local dir_paths=($(find $(echo $PATH | tr ':' ' ') -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune))
+		local num_dirs=${#dir_paths[@]}
+
+		if [ "$num_dirs" -eq 0 ]; then
+			echo "No directory found with name '$dir_name'"
+			return 1
+		elif [ "$num_dirs" -eq 1 ]; then
+			cd "${dir_paths[0]}"  || echo "Error going to repository"
+		else
+			echo "Multiple directories found with name '$dir_name':"
+			for (( i=0; i< "$num_dirs"; i++ )); do
+				echo "[$i] ${dir_paths[$i]}"
+			done
+			read -p "Enter the number of the directory to navigate to: " choice
+			cd "${dir_paths[$choice]}" || echo "Error going to repository"
+		fi
+	else
+		cd "$CHOSEN_GIT" || echo "Error going to git repository"
+	fi
+
+	clear
+	ls -a
+
+	if [ "$command" == "open" ]; then
+		# Open all .c and .h files
+		copen all
+	elif [ -n "$command" ]; then 
+		"$command"
+	fi
+
+	if [ "$goback" == "goback" ]; then
+		cd - || echo "Error going back"
+	fi
+}
+
+
+function goto1
+{
+    if [ -z "$1" ]; then
+        echo "Directory not found."
+    else
+        cd "$(find "$HOME" -name "$1" -type d -print -quit 2>/dev/null)" || echo "Directory not found."
+    fi
+}
+
+# Do not use if you are not in tals computer
+goto_sleep()
+{
+	read -p "Are you sure you want to go? [y/n] " choice
+	case "$choice" in
+		y|Y ) ;;
+		n|N ) echo "Deletion canceled." && return 1 ;;
+		* ) echo "Invalid choice." && return 1 ;;
+	esac
+
+	xrandr --output eDP-1 --brightness 0
+	/home/tal/env/Discord_Die.sh
+	rfkill block wifi
+	pactl set-source-mute @DEFAULT_SOURCE@ 1
+	pactl set-sink-mute @DEFAULT_SINK@ 1
+}
+
+

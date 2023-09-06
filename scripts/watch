@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Watch specified files for modifications and execute a user-defined command.
+#
+# Syntax: watch <file_1> <file_2> ...
+#
+# Arguments:
+#   - <file_pattern>: One or more files to be watched. Wildcards (*, ?) can be used.
+#
+# Description:
+#   The `watch` script monitors the specified files for changes using inotifywait.
+#   When any of the files are modified (close_write event), it executes a user-defined 
+#   command or a default command ('make' in this script). The function takes care of 
+#   finding the files matching the provided patterns and gracefully handles missing files.
+#
+# Command-line Options:
+#   None
+#
+# User-defined Command:
+#   The script prompts the user to enter a command that will be executed whenever any of the
+#   watched files are modified. If the user leaves the input empty, the default command 'make'
+#   will be used.
+#
+# Examples:
+#   1. Watch a single file and compile with 'gcc' on modification:
+#      $ watch myfile.c
+#      $ Enter a command: gcc -o myprogram myfile.c
+#
+# Notes:
+#   - The inotifywait command must be installed on your system for this function to work.
+#   - If the user-defined command is not appropriate for the watched files, ensure you provide
+#     a suitable command to avoid potential issues.
+#   - This script assumes the files are being watched in the user's home directory (~/).
+#   - The script will keep running until manually terminated (CTRL+C).
+#   - Use this script responsibly, as frequent command execution on file changes may lead to
+#     unintended consequences or resource consumption.
+#
+# ----------------------------------------------------------------------------------
+
+if [[ $# -eq 0 ]]; then
+    echo "Please provide at least one file to be watched."
+    exit 1
+fi
+
+FILES=()
+missing_files=()
+
+# Find all files matching the provided patterns
+for file in "$@"; do
+    found_files=("$(find "$HOME" -name "$file*" -type f \( $EXCLUDE_DIRS \) \
+                -prune -print 2>/dev/null)")
+
+    if [[ ${#found_files[@]} -gt 0 ]]; then
+        FILES+=("${found_files[@]}")
+    else
+        missing_files+=("$file")
+    fi
+done
+
+if [[ ${#missing_files[@]} -gt 0 ]]; then
+    echo "The following files were not found:"
+    echo "${missing_files[@]}"
+    exit 1
+fi
+
+if [[ ${#FILES[@]} -eq 0 ]]; then
+    echo "No files found."
+    exit 1
+fi
+
+command=""
+trap "exit 0" SIGINT
+default_command="make"
+read -rp "Enter a command: " command;
+
+if [[ -z "$command" ]]; then
+    command="$default_command"
+fi
+
+# Perform the file watching loop
+while true; do
+    inotifywait -qq -e close_write "${FILES[@]}"
+    eval "$command"
+done
+
+exit 0

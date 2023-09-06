@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# gitlog
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Display a colorful Git log with graph information and author details.
+#
+# Syntax: gitlog
+#
+# Description:
+#   The `gitlog` script allows you to display a colorful Git log with graph
+#   information and author details. It utilizes Git's built-in log command with
+#   various color codes to make the output visually appealing and informative.
+#   The script will show the entire Git log, including all branches and tags.
+#
+# Command-line Options:
+#   None
+#
+# Usage Examples:
+#   1. Display the colorful Git log:
+#      $ gitlog
+#
+# Notes:
+#   - This script assumes that you have a Git repository set and accessible
+#     through the `CHOSEN_GIT` environment variable. Ensure that `CHOSEN_GIT`
+#     is correctly set to the root directory of your desired Git repository.
+#   - The script uses ANSI color escape sequences to provide colorful output.
+#   - The output will be displayed using the 'less' pager, allowing you to
+#     scroll through the log. The pager will automatically quit when reaching
+#     the end of the output.
+#   - Use this script responsibly, especially when dealing with large Git
+#     repositories, as it may take some time to display the entire log.
+#   - Make sure to have the 'less' pager and 'git' command installed and
+#     available in your system PATH for the script to work correctly.
+#
+# -----------------------------------------------------------------------------
+
+if [ -z "$CHOSEN_GIT" ]; then
+    echo "Git repo was not set"
+    exit 1
+fi
+
+cd "$CHOSEN_GIT" || {
+    echo "Invalid Git repository path: $CHOSEN_GIT"
+    exit 1
+}
+
+git log --graph --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) 
+%C(white)%an%C(reset)%C(bold yellow)%d%C(reset) %C(dim white)- %s%C(reset)' --all;

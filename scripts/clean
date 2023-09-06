@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Clean a directory specified by the user.
+#
+# Syntax: clean <folder_name>
+#
+# Arguments:
+#   - <folder_name>: The name of the directory to be cleaned.
+#
+# Description:
+#   The `clean` script allows users to clean a directory in their home directory by 
+#   removing its contents. The script searches for the specified directory in the 
+#   home directory (`$HOME`) and its subdirectories. If the directory is found, 
+#   the script prompts the user for confirmation before proceeding with the 
+#   cleaning process. The user's response should be either 'y' or 'n' (case-insensitive). 
+#   If the user confirms the cleaning process, the script removes all files within 
+#   the specified directory, except for directories themselves. If the directory 
+#   name is 'code_review', the script also removes all files within 'test' directories 
+#   present in the 'code_review' directory. If the user cancels the cleaning process, 
+#   a corresponding message is displayed, and no action is taken. If an invalid choice 
+#   is entered, an appropriate message is displayed, and no action is taken.
+#   If the specified directory is not found, an appropriate message is displayed.
+#
+# Command-line Options:
+#   None
+#
+# Examples:
+#    $ clean my_folder
+#
+# Notes:
+#   - Be cautious when using this script, as cleaned files cannot be recovered.
+#   - The script assumes the directories are being cleaned in the user's home directory (~/).
+#   - This script should be used responsibly, as it can lead to data loss if used incorrectly.
+#   - It is recommended to double-check the directory name before confirming the cleaning process.
+#
+# ----------------------------------------------------------------------------------
+
+trap "exit 0" SIGINT
+# Function to clean a directory
+function clean_directory()
+{
+    local dir_path=""
+    local dir_name="$1"
+    if [ -z "$dir_name" ]; then
+        echo "Please provide a folder to clean: clean <folder name>"
+        return 1
+    fi
+
+    dir_path=$(find "$HOME" -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune | head -n 1)
+
+    if [ -n "$dir_path" ]; then
+
+        read -r -p "Are you sure you want to clean $dir_path? [y/n] " choice
+        case "$choice" in
+            y|Y )
+                if [[ "$dir_name" == "code_review" ]]; then
+                    rm -rf "$dir_path"/test/*/ && find "$dir_path" -type f -exec rm -f {} +
+                else
+                    rm "$dir_path"/*
+                fi
+                ;;
+            n|N )
+                echo "Cleaning canceled."
+                ;;
+            * )
+                echo "Invalid choice."
+                ;;
+        esac
+    else
+        echo "No such directory."
+    fi
+}
+
+# Call function and exit with the function's return status
+clean_directory "$1"
+exit $?

@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Pull a file from a remote Git repository
+#
+# Usage: gitget <file> [output_directory]
+#
+# Description: The `gitget` script allows you to pull a specific file from a remote Git repository
+# located in the current directory. The script takes two arguments:
+#   - <file>: The name of the file to be pulled from the remote Git repository.
+#   - [output_directory]: (Optional) The directory where the pulled file will be placed.
+#                         If not specified, the file will be placed in the current directory.
+#                         This directory must already exist.
+#
+# Requirements:
+#   - Git must be installed and available in the environment.
+#   - The script assumes that a remote Git repository exists in the current directory.
+#   - The 'CHOSEN_GIT' environment variable should be set to the path of the Git repository.
+#     You can define this environment variable in your .bashrc or .bash_profile file:
+#     export CHOSEN_GIT="/path/to/your/git/repository"
+#
+# Examples:
+#   Pull a file called "README.md" to the current directory:
+#   $ gitget README.md
+#
+#   Pull a file called "config.txt" to the "data" directory:
+#   $ gitget config.txt data
+#
+# Notes:
+#   - The script assumes that the file to be pulled exists in the remote Git repository.
+#   - If the specified file is not found in the remote repository, the script will display an error message.
+#   - If the 'CHOSEN_GIT' environment variable is not set or points to an invalid directory, the script will not work correctly.
+#   - Use this script with caution and ensure that you have the necessary permissions to access the Git repository and its files.
+# ------------------------------------------------------------------------------
+
+function pull_file_from_repo()
+{
+    local file_to_pull="$1"
+
+    if [[ -z "$file_to_pull" ]]; then
+        echo "Usage: gitget <file>"
+        return 1
+    fi
+
+    if [[ ! -d "$CHOSEN_GIT" ]]; then
+        echo "Error: Directory $CHOSEN_GIT not found."
+        return 1
+    fi
+
+    pushd "$CHOSEN_GIT" > /dev/null || {
+        echo "Error: Unable to change directory to $CHOSEN_GIT."
+        return 1
+    }
+
+    local remote_file=""
+    remote_file=$(git ls-files --full-name --error-unmatch "$file_to_pull" 2> /dev/null)
+
+    if [[ -z "$remote_file" ]]; then
+        echo "Error: file '$file_to_pull' not found in remote repository."
+        return 1
+    fi
+
+    local branch=""
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git checkout "$branch" -- "$remote_file"
+
+    if [[ -e "$remote_file" ]]; then
+        local output_dir="$2"
+        if [[ -n "$output_dir" ]]; then
+            mkdir -p "$output_dir"
+            mv "$remote_file" "$output_dir/"
+            echo "File pulled and saved as '$output_dir/$(basename "$remote_file")'."
+        else
+            echo "File pulled and saved as '$(basename "$remote_file")'."
+        fi
+    else
+        echo "Error: Failed to pull the file."
+    fi
+
+    return 0
+}
+
+if [[ -z "$1" ]]; then
+    echo "Usage: gitget <file> [output_directory]"
+    exit 1
+fi
+
+pull_file_from_repo "$1" "$2"

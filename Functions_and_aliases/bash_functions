@@ -1,0 +1,1071 @@
+#!/bin/bash
+# bash functions to be source in the bashrc
+
+#-------------------------------------------------------------------------------
+#
+#                           weather() function:
+#
+#                    Usage: weather <town or city>
+#
+# The weather function displays the weather of the provided town or city. It
+# clears the terminal and uses the curl command to fetch the weather information
+# from the wttr.in website. The town or city should be provided as an argument.
+#
+#-------------------------------------------------------------------------------
+
+weather() 
+{
+	if [ -z "$1" ]; then
+		echo "Usage: weather <town or city>"
+		return 1
+	fi
+	clear
+	curl wttr.in/$1 ;
+}
+
+
+#-------------------------------------------------------------------------------
+#
+#                        creatfiles() function:
+#
+#                     Usage: creatfiles <filename>
+#
+# The creatfiles function creates a file with the provided filename in the
+# current directory and all subdirectories recursively. It uses the find command
+# to locate all directories in the current directory and executes the touch
+# command to create the file in each directory.
+#
+#-------------------------------------------------------------------------------
+
+creatfiles()
+{
+	find . -type d -exec touch {}/"$1" \; ;
+}
+
+#-------------------------------------------------------------------------------
+#
+#                      removefiles() function:
+#
+#                  Usage: removefiles <filename>
+#
+# The removefiles function removes a file with the provided filename in the
+# current directory and all subdirectories recursively. It uses the find command
+# to locate all directories in the current directory and executes the rm command
+# to remove the file in each directory.
+#
+#-------------------------------------------------------------------------------
+
+removefiles()
+{
+	find . -type d -exec rm {}/"$1" \; ;
+}
+
+# ------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/histo
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Search bash history for a specific keyword.
+#
+# Usage: histo <keyword>
+#
+# Description: The `histo` function clears the screen and searches the bash history
+# for the specified keyword, displaying all commands that match.
+#
+# Arguments:
+#   - <keyword>: The keyword to search for in the bash history.
+#
+# Examples:
+#   Search bash history for the keyword "cd":
+#   $ histo cd
+#
+# Notes:
+#   - The function is case sensitive.
+# ------------------------------------------------------------------------------
+
+histo()
+{
+	if [ -z "$1" ]; then
+		echo "Usage: histo <key word>"
+		return 1
+	fi
+	clear
+	history | grep "$1" ;
+}
+
+
+# ------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/folder
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a new directory and change to it.
+#
+# Usage: folder <folder name>
+#
+# Description: The `folder` function creates a new directory with the specified name
+# and navigates to it.
+#
+# Arguments:
+#   - <folder name>: The name of the directory to create.
+#
+# Examples:
+#   Create a new directory called "my_folder" and navigate to it:
+#   $ folder my_folder
+#
+# Notes:
+#   - If a directory with the specified name already exists, the function will
+#     still navigate to it.
+# ------------------------------------------------------------------------------
+
+folder()
+{
+	if [ -z "$1" ]; then
+		echo "Usage: folder <folder name>"
+		return 1
+	fi
+
+	mkdir -p "$1" && cd "$1"; 
+}
+
+
+goto()
+{
+	local path_to_git="$CHOSEN_GIT"
+	local dir_name="$1"
+	local command="$2"
+	local goback="$3"
+
+	if [[ "$dir_name" == "sleep" ]]; then
+		goto_sleep
+		return
+	fi
+
+	if [ -n "$dir_name" ]; then
+		local dir_paths=($(find $(echo $PATH | tr ':' ' ') -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune))
+		local num_dirs=${#dir_paths[@]}
+
+		if [ $num_dirs -eq 0 ]; then
+			echo "No directory found with name '$dir_name'"
+			return 1
+		elif [ $num_dirs -eq 1 ]; then
+			cd "${dir_paths[0]}"
+		else
+			echo "Multiple directories found with name '$dir_name':"
+			for (( i=0; i<$num_dirs; i++ )); do
+				echo "[$i] ${dir_paths[$i]}"
+			done
+			read -p "Enter the number of the directory to navigate to: " choice
+			cd "${dir_paths[$choice]}"
+		fi
+	else
+		cd "$path_to_git"
+	fi
+
+	clear
+	ls -a
+
+	if [ "$command" == "open" ]; then
+		# Open all .c and .h files
+		copen all
+	elif [ -n "$command" ]; then 
+		"$command"
+	fi
+
+	if [ "$goback" == "goback" ]; then
+		cd -
+	fi
+}
+
+# Do not use if you are not in tals computer
+goto_sleep()
+{
+	read -p "Are you sure you want to go? [y/n] " choice
+	case "$choice" in
+		y|Y ) ;;
+		n|N ) echo "Deletion canceled." && return 1 ;;
+		* ) echo "Invalid choice." && return 1 ;;
+	esac
+
+	xrandr --output eDP-1 --brightness 0
+	/home/tal/env/Discord_Die.sh
+	rfkill block wifi
+	pactl set-source-mute @DEFAULT_SOURCE@ 1
+	pactl set-sink-mute @DEFAULT_SINK@ 1
+}
+
+
+
+# ----------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/leak
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Execute a program with valgrind to detect memory leaks and report them
+#
+# Syntax: leak [<program_name>]
+#
+# Description: The `leak()` function executes a program with valgrind to detect memory
+# leaks and report them. If no argument is provided, the function will search for the
+# first executable file in the current directory and execute it with valgrind. If the
+# current directory is "test" and no argument is provided, the function will search for
+# a C file in the current directory whose name ends with "_test.c", compile it into an
+# executable, and execute it with valgrind. If an argument is provided, the function will
+# search for a file with the provided name in the home directory (excluding the ".cache"
+# directory) and execute it with valgrind.
+#
+# Examples: 
+#   Execute an executable in the current directory with valgrind:
+#   $ leak
+#
+#   Execute a specific executable with valgrind:
+#   $ leak myprogram
+#
+#   Compile and execute a C file with valgrind:
+#   $ cd test
+#   $ touch myprogram_test.c
+#   $ gcc myprogram_test.c -o myprogram_test
+#   $ leak
+#
+#   Execute a program located in the home directory with valgrind:
+#   $ leak ~/myprogram
+#
+# Notes:
+#   - The valgrind tool must be installed on your system for this function to work.
+#   - This function assumes that the program being executed is compiled with the -g flag
+#     in order to generate debug information that valgrind can use.
+#   - This function may not work correctly with all types of programs or in all scenarios,
+#     so use it with caution and always verify the results.
+# License: GPL 2.x.
+# ----------------------------------------------------------------------------------
+
+vlg()
+{
+	local parent_dir=$(basename "$(dirname "$PWD")")
+	vlg="valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all -s"
+	local name=""
+
+	if [[ "$parent_dir" == "test" ]] && [[ -z "$1" ]]; then
+		name=$(find . -maxdepth 1 -type f -name "*.c" -exec basename {} _test.c \;)
+		clear && time $vlg ../../bin/executables/"$name"
+		return
+	elif [[ -z "$1" ]]; then
+		name=$(find . -maxdepth 1 -type f -executable | head -n 1)
+		# Check if an executable file was found
+		if [ -n "$name" ]; then
+			clear && time $vlg ./"$name"
+			return
+		else
+			echo "No executable file found."
+			return
+		fi
+	else
+		name=$(find "$CHOSEN_GIT" -path "$CHOSEN_GIT/.cache" -prune -o -name "$1" -type f -print 2>/dev/null)
+		# Check if a file with the given name was found
+		if [ -n "$name" ]; then
+			clear && time $vlg "$name"
+			return
+		else
+			echo "No file with the name $1 found in $CHOSEN_GIT."
+			return
+		fi
+	fi
+}
+
+# ----------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/run
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Execute a program with optional arguments
+#
+# Syntax: run [<program_name>]
+#
+# Description: The `run()` function executes a program with optional arguments. If no
+# argument is provided, the function will search for the first executable file in the
+# current directory and execute it. If the current directory is "test" and no argument
+# is provided, the function will search for a C file in the current directory whose
+# name ends with "_test.c", compile it into an executable, and execute it. If an
+# argument is provided, the function will search for a file with the provided name in
+# the home directory (excluding the ".cache" directory) and execute it.
+#
+# Examples:
+#   Execute an executable in the current directory:
+#   $ run
+#
+#   Execute a specific executable:
+#   $ run myprogram
+#
+#   Compile and execute a C file:
+#   $ cd test
+#   $ touch myprogram_test.c
+#   $ gcc myprogram_test.c -o myprogram_test
+#   $ run
+#
+#   Execute a program located in the home directory:
+#   $ run ~/myprogram
+#
+# Notes:
+#   - This function assumes that the program being executed is compiled with the -g flag
+#     in order to generate debug information.
+#   - This function may not work correctly with all types of programs or in all scenarios,
+#     so use it with caution and always verify the results.
+# License: GPL 2.x.
+# ----------------------------------------------------------------------------------
+
+run()
+{
+	local parent_dir=$(basename "$(dirname "$PWD")")
+	local name=""
+
+	if [[ "$parent_dir" == "test" ]] && [[ -z "$1" ]]; then
+		name=$(find . -maxdepth 1 -type f -name "*.c" -exec basename {} _test.c \;)
+		clear && time ../../bin/executables/"$name"
+	elif [[ -z "$1" ]]; then
+		name=$(find . -maxdepth 1 -type f -executable | head -n 1)
+		# Check if an executable file was found
+		if [ -n "$name" ]; then
+			clear && time ./"$name"
+		else
+			echo "No executable file found."
+		fi
+	else
+		name=$(find "$HOME" -path "$CHOSEN_GIT/.cache" -prune -o -name "$1" -type f -print 2>/dev/null)
+		$name
+	fi
+}
+
+
+###############################################################################
+# Searching info in research file
+###############################################################################
+
+# ------------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/search
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Search for keywords in a file and print the paragraph containing them
+#
+# Syntax: search <keyword1> [<keyword2> ...]
+#
+# Description: The `search()` function searches for the specified keywords in a file
+# called `.tricks` located in the user's home directory. It loops through each keyword
+# and highlights it in the text of the paragraph that contains it. The keyword is printed
+# in red and bold, and the paragraph is printed with the keyword highlighted in yellow.
+# If a keyword contains spaces, it should be enclosed in quotes. 
+#
+# Arguments:
+#   - <keyword1>: A search term to look for in the file.
+#   - [<keyword2> ...]: Optional additional search terms.
+#
+# Examples:
+#   Search for the keyword "bash":
+#   $ search bash
+#
+#   Search for multiple keywords:
+#   $ search "bash" "linux"
+#
+#   Search for a keyword containing spaces:
+#   $ search "command line"
+#
+# Notes:
+#   - The function only searches in the first occurrence of `.tricks` found in the user's
+#     home directory.
+#   - The function requires the `awk` and `sed` commands to be installed.
+# ------------------------------------------------------------------------------
+
+search()
+{
+	# Define color codes
+	local keyword_color="1;31m" # Red
+	local highlight_color="1;33m" # Yellow
+	local research="$(find "$HOME" -type f -name ".tricks" | head -n 1)"
+	if [[ -z "$1" ]]; then
+		echo "Please provide at least one search term."
+		return
+	fi
+
+	clear
+
+	# Loop through each keyword and highlight it in the text
+	while [[ $# -gt 0 ]]; do
+		local keyword="$1"
+		shift
+
+		# Handle quoted keywords
+		if [[ "$keyword" == \"* ]]; then
+			while [[ $# -gt 0 && "$keyword" != *\" ]]; do
+				keyword="$keyword $1"
+				shift
+			done
+			keyword="${keyword%\"}"
+			keyword="${keyword#\"}"
+		fi
+
+		# Replace whitespace with dashes
+		local formatted_keyword=$(echo "$keyword" | tr ' ' '-')
+
+		# Find the paragraph in the file
+		local paragraph=$(grep -i -m 1 -B 3 -A 300 "$keyword" "$research" | awk -v RS="--\n" "/$keyword/")
+
+		# Print the keyword in red and bold
+		echo -e "\n\033[${keyword_color}${formatted_keyword//[-]/' '}\033[0m\n"
+
+		# Print the paragraph with keyword highlighted in yellow
+		local highlighted_paragraph=$(echo -e "${paragraph}" | sed "s/$keyword/$(echo -e "\033[${highlight_color}${formatted_keyword//[-]/' '}\033[0m")/g")
+		echo -e "$highlighted_paragraph\n"
+	done
+}
+
+###############################################################################
+# git aliases and functions
+###############################################################################
+
+
+
+###############################################################################
+# Terminal work
+###############################################################################
+
+
+# Work in progress do not use it!!!!!
+
+butyfile()
+{
+    local file=$(find $(echo $HOME | tr ':' ' ') -type f -name "$1")
+
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: clean_file FILENAME"
+        return 1
+    fi
+
+    if [[ ! -f "$file" ]]; then
+        echo "Error: File '$file' not found"
+        return 1
+    fi
+
+    # Remove trailing spaces and tabs
+    sed -i 's/[ \t]*$//' "$file"
+
+    # Remove spaces before opening parentheses
+    sed -i 's/\bfor[ \t]*(/for(/g' "$file"
+    sed -i 's/\bwhile[ \t]*(/while(/g' "$file"
+    sed -i 's/\bif[ \t]*(/if(/g' "$file"
+    sed -i 's/\belseif[ \t]*(/elseif(/g' "$file"
+    sed -i 's/\belse[ \t]*(/else(/g' "$file"
+    sed -i 's/\bfunction[ \t]*\([a-zA-Z0-9_]*\)[ \t]*(/function \1(/g' "$file"
+
+    # Auto-indent using indent with tabs and opening brackets on a new line
+    indent -kr -ts4 -bl -bli0 "$file" && rm "${file}~"
+}
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/move2review
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Move specified files from a project to the code review directory.
+#
+# Usage: move2review <project name> <h> <c> <test>
+#
+# Arguments:
+#   - <project name>: Name of the project to move files from.
+#   - <h>: Move header file to the include directory in code review.
+#   - <c>: Move C source file to the source directory in code review.
+#   - <test>: Move entire project directory to the test directory in code review.
+#
+# Description: The `move2review` function takes a project name and one or more file
+# types to move from the project to the code review directory. It uses `find` to
+# search for the project directory in the user's home directory, and moves the
+# specified files or directories to the appropriate location in the code review
+# directory. If a file type argument is not recognized, the function prints an
+# error message.
+#
+# Examples:
+#   Move a header file and the entire project directory to the code review:
+#   $ move2review my_project h test
+#
+#   Move a C source file to the code review:
+#   $ move2review my_project c
+#
+# Notes:
+#   - The code review directory is assumed to be located at ~/code_review.
+#   - All moved files are copied to the code review directory, not moved.
+#   - The project directory must be unique in the user's home directory.
+# -----------------------------------------------------------------------------
+
+move2review()
+{
+	if [ -z "$1" ]; then
+		echo "Usage: move2review <project name> <h> <c> <test> <make>"
+		return 1
+	fi
+
+	local dir_name="$1"
+	local dir_paths=($(find $(echo $CHOSEN_GIT | tr ':' ' ') -type d -name "$dir_name"))
+	local review=($(find $(echo $CHOSEN_GIT | tr ':' ' ') -type d -name "code_review"))
+
+	# Shift first argument out of positional parameters
+	shift
+
+	# Loop over remaining arguments
+	for arg in "$@"; do
+		case $arg in
+			"test") cp -r "$dir_paths" "$review"/test/ ;;
+			"h") cp "$dir_paths"/../../include/"$dir_name".$arg "$review"/include/ ;;
+			"c") cp "$dir_paths"/../../src/"$dir_name".$arg "$review"/src/ ;;
+			*) echo "Unknown argument: $arg" >&2 ;;
+		esac
+	done
+}
+
+# Counts number of lines in a file
+lines()
+{
+	find . -name "$1" | xargs wc -l
+}
+
+###############################################################################
+# Working files and environment
+###############################################################################
+
+#-------------------------------------------------------------------------------
+#
+#                     shlifim() function:
+#
+#                      Usage: shlifim
+#
+# The shlifim function searches for the ".tricks" file in the user's home
+# directory and opens it in the default application set for that file type.
+# This file is used to store custom shell functions that the user has defined.
+#
+#-------------------------------------------------------------------------------
+
+shlifim()
+{
+	local path_to_tricks=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name ".tricks")
+	code "$path_to_tricks"
+}
+
+
+
+
+###############################################################################
+# Work space .c, test.c, .h make files in a new directory
+###############################################################################
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/project
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a new project directory and populate it with example files.
+#
+# Usage: project
+#
+# Arguments: None.
+#
+# Description: The `project` function prompts the user for a location and a name
+# for the new project directory. It creates the directory and subdirectories for
+# source, header, and test files. Then, it copies example files from a util
+# directory into the new project directory. Finally, it opens all the project
+# files in the user's preferred editor. The example files are:
+#   - c_file_example.c: A C source file with basic boilerplate.
+#   - h_file_example.h: A header file with a basic function declaration.
+#   - test_file_example.c: A test file with a basic test function.
+#   - makefile: A Makefile for building the project.
+#
+# Examples:
+#   Create a new project directory:
+#   $ project
+#
+# Notes:
+#   - The user must have write access to the chosen location for the project.
+#   - The user's preferred editor is assumed to be set in the `$EDITOR` variable.
+#   - The example files are assumed to be located in the util directory.
+#   - The project name must be unique in the chosen location.
+# ----------------------------------------------------------------------------- 
+
+project()
+{
+	read -p "Name: " name
+	if [[ -z "$name" ]]; then
+		echo -e "Please provide a name."
+		return 1
+	fi
+
+	read -p "Language [c, cpp]:"  Language
+	if [[ -z "$Language" ]]; then
+		echo -e "Please provide a programming language."
+		return 1
+	fi
+
+	if [[ "$Language" == "c" ]]; then
+		read -p "Choose a location : " location
+		if [[ -z "$location" ]]; then
+			location=$PWD
+		fi
+
+		goto "$location"
+
+		if ! all_directories_here; then
+			return 1
+		fi
+
+		cproject "$name"
+
+	elif [[ "$Language" == "cpp" ]]; then
+		project_location="";
+		read -p "Final project? [y/n]:" choice
+		case "$choice" in
+			y|Y ) project_location="$CHOSEN_GIT"/cpp/final_project/framework;;
+			n|N ) project_location="$CHOSEN_GIT"/cpp/src;;
+			* ) echo "Invalid choice." && return 1;;
+		esac
+
+		cd "$project_location"
+		cppproject "$name"
+	fi
+
+	return 0;
+}
+
+cproject()
+{
+	name="$1"
+
+	local path_to_make=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "complex_makefile_example")
+	local path_to_c_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "c_file_example.c")
+	local path_to_test_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "test_file_example.c")
+	local path_to_h_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "h_file_example.h")
+
+	# Creating repository and & Opening project files.
+	mkdir test/"$name"
+
+	# Copying the example files from util repository into project files.
+	cat "$path_to_test_example" > test/"$name"/"$name"_test.c
+	cat "$path_to_c_example" > src/"$name".c
+	cat "$path_to_h_example" > include/"$name".h
+	cat "$path_to_make" > test/"$name"/makefile
+
+	local header_capital=$(echo "$name" | tr '[:lower:]' '[:upper:]')
+	# Replacing "@" with the project name.
+	sed -i "s/@/"$header_capital"/g" include/"$name".h
+	sed -i "s/@/"$name"/g" src/"$name".c
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' src/"$name".c
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' test/"$name"/"$name"_test.c
+	sed -i "s/@/"$name"/g" test/"$name"/"$name"_test.c
+	sed -i "s/@/"$name"/g" test/"$name"/makefile
+
+	# Open all the files of the project
+	cd test/$name/
+	copen all
+	clear && ls
+}
+
+cppproject()
+{
+	name="$1";
+
+	local path_to_make=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "cpp_complex_makefile_example");
+	local path_to_c_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "cpp_file_example.cpp");
+	local path_to_test_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "test_file_example.cpp");
+	local path_to_h_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "hpp_file_example.hpp");
+
+	# Creating repository & Opening project files.
+	mkdir "$name";
+
+	# Copying the example files from util repository into project files.
+	cat "$path_to_test_example" > "$name"/"$name"_test.cpp;
+	cat "$path_to_c_example" > "$name"/"$name".cpp;
+	cat "$path_to_h_example" > "$name"/"$name".hpp;
+	cat "$path_to_make" > "$name"/makefile;
+
+	local header_capital=$(echo "$name" | tr '[:lower:]' '[:upper:]');
+	# Replacing "@" with the project name.
+	sed -i "s/@/"ILRD_RD141_$header_capital"/g" "$name"/"$name".hpp;
+	sed -i "s/@/"$name"/g" "$name"/"$name".cpp;
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' "$name"/"$name".cpp;
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' "$name"/"$name"_test.cpp;
+	sed -i "s/@/"$name"/g" "$name"/"$name"_test.cpp;
+	sed -i "s/@/"$name"/g" "$name"/makefile;
+
+	# Open all the files of the project
+	cd "$name"/;
+	ln -s ../src/"$name"/"$name".hpp ../../include/"$name".hpp
+	ln -s ../src/"$name"/"$name"_test.cpp ../../test/"$name"_test.cpp
+	code . && code *.cpp && code *.hpp && clear && ls;
+}
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/local_project
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create a new local C project with example files.
+#
+# Usage: local_project <project name>
+#
+# Arguments:
+#   - <project name>: Name of the project to create.
+#
+# Description: The `local_project` function creates a new directory with the
+# specified project name, and copies example C files and a makefile from a
+# utility directory into the new project directory. The function then replaces
+# placeholder values in the example files with the project name, and opens all
+# project files in a text editor.
+#
+# Examples:
+#   Create a new project named `my_project`:
+#   $ local_project my_project
+#
+# Notes:
+#   - Example files are assumed to be located in ~/example_files.
+#   - The function assumes that the makefile for the new project should be named
+#     "makefile".
+# -----------------------------------------------------------------------------
+
+local_project() 
+{
+	ext=""
+	fext=""
+	if [[ -z "$1" ]]; then
+		echo -e "Please provide at least one argument, workspace 'number'."
+		return
+	fi
+
+	if [[ "++" == "$2" ]]; then     # need to change function to ccp + c
+		ext="pp"
+		fext="cpp_"
+	fi
+
+	local path_to_make=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name ""$fext"makefile_example")
+	local path_to_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "c"$ext"_file_example.c"$ext"")
+	local path_to_test_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "test_file_example.c"$ext"")
+	local path_to_h_example=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "h"$ext"_file_example.h"$ext"")
+	local header_capital=""
+
+	# Creating repository and cd into it & Opening project files.
+	mkdir "$1" && cd "$1"
+
+	# Copying the example files from util repository into project files.
+	cat "$path_to_test_example" > "$1"_test.c"$ext"
+	cat "$path_to_example" > "$1".c"$ext"
+	cat "$path_to_h_example" > "$1".h"$ext"
+	cat "$path_to_make" >> makefile
+
+	# Replacing "@" with the project name.
+	header_capital=$(echo "$1" | tr '[:lower:]' '[:upper:]')
+	sed -i "s/@/"$header_capital"/g" "$1".h"$ext"
+	sed -i "s/@/"$1"/g" "$1".c"$ext"
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' "$1".c"$ext"
+	sed -i 's/add_date/'$(date +"%d.%m.%Y")'/' "$1"_test.c"$ext"
+	sed -i "s/@/"$1"/g" "$1"_test.c
+	sed -i "1s|^|# Path to files\nPATH_TO_DIR = "$PWD"\n\n|" makefile
+	sed -i "s/@/"$1"/g" makefile
+
+	# Open all the files of the project
+	code "$1".c"$ext" && code "$1"_test.c"$ext" && code "$1".h"$ext";
+}
+ 
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/makeme
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Create test functions or function skeletons for a C project.
+#
+# Usage: makeme <'tests' or 'functions'>
+#
+# Arguments:
+#   - <'tests' or 'functions'>: The type of code to generate. If 'tests', test
+#     functions will be generated for each function in the project's header file.
+#     If 'functions', function skeletons will be generated for each function in
+#     the project's header file.
+#
+# Description: The `makeme` function takes one argument to generate test functions
+# or function skeletons for a C project. If the argument is 'tests', the function
+# will generate test functions for each function in the project's header file,
+# and insert them into the project's test file. If the argument is 'functions',
+# the function will generate function skeletons for each function in the project's
+# header file, and insert them into the project's source file.
+#
+# Examples:
+#   Generate test functions for a project named `my_project`:
+#   $ cd /path/to/my_project
+#   $ makeme tests
+#
+#   Generate function skeletons for a project named `my_project`:
+#   $ cd /path/to/my_project
+#   $ makeme functions
+#
+# Notes:
+#   - This function assumes that the project follows a certain directory structure,
+#     with source files in `../../src/` and header files in `../../include/`.
+#   - The project name is assumed to be the name of the current working directory.
+#   - This function only generates code for functions declared with the `void`
+#     return type.
+# -----------------------------------------------------------------------------
+
+function makeme()
+{
+	local project_name=$(basename "$PWD")
+	local cfile=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "$project_name.c")
+	local tfile=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "$project_name"_test.c)
+	local hfile=$(find $(echo $CHOSEN_GIT | tr ':' ' ') -type f -name "$project_name.h")
+
+	if ! find . -wholename "$cfile" -print -quit; then
+		echo "File $cfile not found"
+		return 1
+	fi
+
+	if ! find . -wholename "$tfile" -print -quit; then
+		echo "File $tfile not found"
+		return 1
+	fi
+
+	if ! find . -wholename "$hfile" -print -quit; then
+		echo "File $hfile not found"
+		return 1
+	fi
+
+	if [ $# -ne 1 ]; then
+		echo "Error: Usege: makeme <'tests' or 'functions'>"
+		return 1
+	fi
+
+	local mline=$(grep -n "{" "$tfile" | head -n 1 | cut -d ":" -f 1)
+	local m1line=$(grep -n ""$project_name".h" "$tfile" | head -n 1 | cut -d ":" -f 1)
+
+	# Check that two arguments were provided
+	if [ "$1" == "tests" ]; then
+		awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("void %sTest(void)\n{\n	return;\n}\n/*****************************************************************************/\n", $0)}' "$hfile" >> "$tfile"
+
+	awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("	%sTest();\n", $0); printf("\tputs(\"\\n%sTest() : passed.\");\n", $0)}' "$hfile" > tmp_file
+	sed -i ""$mline" r tmp_file" "$tfile"
+	rm tmp_file
+
+	awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("void %sTest(void);\n", $0)}' "$hfile" > tmp_file
+	sed -i ""$m1line" r tmp_file" "$tfile"
+	rm tmp_file
+
+	elif [ "$1" == "functions" ]; then
+		awk '/\);/ && !/typedef/' "$hfile" | sed 's/;/\n{\n	return;\n}\n\/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\/ /g' >> "$cfile"
+	fi
+}
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/delete_project
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Deletes a project and all of its related files.
+#
+# Usage: delete_project <project name>
+#
+# Arguments:
+#   - <project name>: The name of the project to delete.
+#
+# Description: The `delete_project` function takes the name of a project as an argument,
+# and deletes the project directory and all of its related files. The function prompts
+# the user for confirmation before deleting the files. If the user confirms the deletion,
+# the function navigates to the project directory, deletes the makefile, navigates up one
+# directory, deletes the project directory, and then searches the parent directory and all
+# of its subdirectories for files containing the project name and deletes them.
+#
+# Examples:
+#   Delete the project called `my_project`:
+#   $ delete_project my_project
+#
+# Notes:
+#   - This function does not perform any safety checks. Use with caution.
+#   - This function permanently deletes files and cannot be undone.
+# -----------------------------------------------------------------------------
+
+delete_project()
+{
+	local name=$1
+	local current_dir="$PWD"
+	if [ -z $1 ]; then
+		echo "Please provide project name to delete."
+		return 1
+	fi
+
+	read -p "Are you sure you want to delete the project "$name" and all of its related files? [y/n] " choice
+	case "$choice" in
+		y|Y ) goto $name && rm -rf makefile && cd .. && rm -rf "$PWD"/"$name" && cd .. && find . -type f -name "*"$name"*" -delete ;;
+		n|N ) echo "Deletion canceled.";;
+		* ) echo "Invalid choice.";;
+	esac
+	cd "$current_dir"
+}
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/all_directories_here
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Check if all required directories exist in the current directory.
+#
+# Usage: all_directories_here
+#
+# Arguments: None
+#
+# Description: The `all_directories_here` function checks if the directories `src`, `bin`,
+# `include`, and `test` exist in the current directory. If all directories exist, the function
+# returns true, otherwise it prints an error message for each missing directory and returns false.
+#
+# Examples:
+#   Check if all required directories exist in the current directory:
+#   $ all_directories_here
+#
+# Notes: None
+# -----------------------------------------------------------------------------
+
+all_directories_here()
+{
+	if [ -d "src" ] && [ -d "bin" ] && [ -d "include" ] && [ -d "test" ]; then
+		return 0  # return true
+	else
+		if [ ! -d "src" ]; then
+		    echo "src directory does not exist"
+		fi
+		if [ ! -d "bin" ]; then
+		    echo "bin directory does not exist"
+		fi
+		if [ ! -d "include" ]; then
+		    echo "include directory does not exist"
+		fi
+		if [ ! -d "test" ]; then
+			echo "test directory does not exist"
+		fi
+		return 1  # return false
+	fi
+}
+
+# -----------------------------------------------------------------------------
+# File: ~/Documents/Infinity/work/tal.aharon/.myfuncs/env
+# Author: Tal Aharon
+# License: GPL 2.x
+#
+# Purpose: Set up the environment for a new machine by copying necessary files 
+#          and creating a self-contained executable.
+#
+# Usage: env
+#
+# Arguments: None.
+#
+# Description: The `env` function sets up the environment for a new machine by 
+# copying necessary files to a new directory, creating a self-contained executable 
+# file, and cleaning up the copied files. The function copies the following files 
+# to the `~/setup` directory:
+#
+#   - `~/.myfuncs`: a directory containing custom shell functions
+#   - `~/.funfuncs`: a directory containing additional custom shell functions
+#   - `~/.tricks`: a directory containing various scripts and snippets
+#   - `~/utils/make_files/complex_makefile_example`: a complex Makefile example file
+#   - `~/utils/make_files/makefile_example`: a basic Makefile example file
+#
+# The function then creates a self-contained executable file called `env.run` by 
+# calling the `makeself` script with the appropriate arguments. The new file is 
+# created in the current directory and includes the `setup` directory with all 
+# copied files. Finally, the function cleans up the copied files by deleting them.
+#
+# Examples: To set up the environment for a new machine, run:
+#   $ env
+#
+# Notes:
+#   - This function requires the `makeself` script to be installed.
+#   - This function assumes that the user has the necessary files in the specified directories.
+# -----------------------------------------------------------------------------
+
+env()
+{
+	current_dir="$PWD"
+	file_name="env.run"
+
+	cp /home/tal/Documents/Infinity/work/tal.aharon/.myfuncs /home/tal/setup/.functions
+	cp /home/tal/Documents/Infinity/work/tal.aharon/.funfuncs /home/tal/setup/.fun_functions
+	cp /home/tal/Documents/Infinity/work/tal.aharon/.tricks /home/tal/setup/.research
+	cp /home/tal/Documents/Infinity/work/tal.aharon/utils/make_files/complex_makefile_example /home/tal/setup/complex_makefile_example_setup
+	cp /home/tal/Documents/Infinity/work/tal.aharon/utils/make_files/makefile_example /home/tal/setup/makefile_example_setup
+
+	cd ~
+
+	if ! makeself --nooverwrite --notemp --tar-extra "--directory ./" setup/ "$file_name" "Environment setup" ./setup.sh; then
+		echo "Error: Failed to create env.run file." >&2
+		return 1
+	fi
+
+	rm /home/tal/setup/.functions
+	rm /home/tal/setup/.fun_functions
+	rm /home/tal/setup/.research
+	rm /home/tal/setup/complex_makefile_example_setup
+	rm /home/tal/setup/makefile_example_setup
+	chmod +x env.run
+
+	cd "$current_dir"
+}
+
+
+function add_test_functions() {
+    local hfile=../../include/"$(basename "$PWD")".h
+    local tfile="$(basename "$PWD")"_test.c
+    local mline=$(grep -n "{" "$tfile" | head -n 1 | cut -d ":" -f 1)
+    local m1line=$(grep -n "$hfile" "$tfile" | head -n 1 | cut -d ":" -f 1)
+
+    if ! find . -wholename "$hfile" -print -quit; then
+        echo "File $hfile not found"
+        return 1
+    fi
+
+    awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("void %sTest(void)\n{\n	return;\n}\n/*****************************************************************************/\n", $0)}' "$hfile" >> "$tfile"
+
+    awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("	%sTest();\n", $0); printf("\tputs(\"\\n%sTest() : passed.\");\n", $0)}' "$hfile" > tmp_file
+    sed -i ""$mline" r tmp_file" "$tfile"
+    rm tmp_file
+
+    awk '/\);/ && !/typedef/ {sub(/^[^ ]+ /,""); sub(/\(.*/,""); if (substr($0,1,1)=="*") sub(/^\*/, ""); printf("void %sTest(void);\n", $0)}' "$hfile" > tmp_file
+    sed -i ""$m1line" r tmp_file" "$tfile"
+    rm tmp_file
+}
+
+function add_functions() {
+    local hfile=../../include/"$(basename "$PWD")".h
+    local cfile=../../src/"$(basename "$PWD")".c
+
+    if ! find . -wholename "$hfile" -print -quit; then
+        echo "File $hfile not found"
+        return 1
+    fi
+
+    if ! find . -wholename "$cfile" -print -quit; then
+        echo "File $cfile not found"
+        return 1
+    fi
+
+    awk '/\);/ && !/typedef/' "$hfile" | sed 's/;/\n{\n	return;\n}\n\/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\/ /g' >> "$cfile"
+}
+
+function makeme1() {
+    if [ $# -ne 1 ]; then
+        echo "Error: Usage: makeme <'tests' or 'functions'>"
+        return 1
+    fi
+
+    case "$1" in
+        tests)
+            add_test_functions
+            ;;
+        functions)
+            add_functions
+            ;;
+        *)
+            echo "Error: Invalid argument '$1'"
+            echo "Usage: makeme <'tests' or 'functions'>"
+            return 1
+            ;;
+    esac
+}
