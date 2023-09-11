@@ -10,7 +10,7 @@ The core feature of this project is the setup.sh script, which simplifies the se
 * The set_up.sh is not ready yet for running
 
 ```shell
-$ git clone https://github.com/yourusername/D.E.L.T-BashTools.git
+$ git clone https://github.com/YamtalDev/D.E.L.T-BashTools.git
 $ cd D.E.L.T-BashTools
 $ ./setup.sh
 

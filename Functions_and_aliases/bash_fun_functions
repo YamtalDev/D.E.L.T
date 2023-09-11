@@ -220,7 +220,7 @@ goto()
 	fi
 
 	if [ -n "$dir_name" ]; then
-		local dir_paths=($(find $(echo $PATH | tr ':' ' ') -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune))
+		local dir_paths=($(find $(echo $HOME | tr ':' ' ') -type d -name "$dir_name" \( $EXCLUDE_DIRS \) -prune))
 		local num_dirs=${#dir_paths[@]}
 
 		if [ "$num_dirs" -eq 0 ]; then
