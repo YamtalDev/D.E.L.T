@@ -1,4 +1,4 @@
-# D.E.T.L-BashTools
+# D.E.T.L
 
 D.E.L.T-BashTools is a collection of developer experience Linux tools (D.E.L.T) designed to streamline the daily workflow of Linux developers. The primary goal of this project is to provide Linux developers with a set of powerful and versatile tools to automate their daily tasks and enhance their overall development experience.
 
